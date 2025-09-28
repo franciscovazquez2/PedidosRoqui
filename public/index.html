@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos App</title>
+</head>
+<body>
+  
+  <h3>Seleccionar Proveedor</h3>
+  <select id="proveedorSelect"></select>
+
+  <h3>Crear Proveedor</h3>
+  
+  <input type="text" id="nombreProveedor" placeholder="Nombre del proveedor">
+  <button onclick="crearProveedor()">Crear</button>
+  
+  <h1>Crear Pedido</h1>
+  
+  <form id="pedidoForm">
+    <label>Proveedor: <input type="text" id="proveedor" required></label><br><br>
+    <label>Producto: <input type="text" id="producto" required></label><br><br>
+    <label>Cantidad: <input type="number" id="cantidad" required></label><br><br>
+    <button type="submit">Agregar</button>
+  </form>
+
+  <p id="mensaje"></p>
+
+  <h2>Pedidos cargados</h2>
+    <table border="1" id="tablaPedidos">
+    <thead>
+        <tr>
+        <th>Proveedor</th>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+    </table>
+
+  <script src="main.js"></script>
+</body>
+</html>
