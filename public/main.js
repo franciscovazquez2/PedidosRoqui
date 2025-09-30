@@ -1,40 +1,86 @@
 "use strict";
 
-//hasta que no cargue no mostramos proveedores existentes
+
+const selectProveedores = document.getElementById("proveedorSelect");
+const eliminarProveedor = document.getElementById("eliminarProveedor");
+
+//EVENTOS
+
+//hasta que no cargue no se muestran los proveedores existentes
 document.addEventListener("DOMContentLoaded", () => {
   cargarProveedores();
 });
 
-//devuelve los proveedores cargados
-function cargarProveedores() {
-  fetch('/api/proveedores')
-    .then(res => res.json())
-    .then(proveedores => {
-      const select = document.getElementById("proveedorSelect");
-      select.innerHTML = ""; // limpiamos por si acaso
+//cada vez que cambia el select se muestra el pedido del proveedor
+selectProveedores.addEventListener("change", () => {
+  const proveedor = selectProveedores.value;
+  if (proveedor) {
+    cargarPedidos(proveedor);
+  }
+});
 
-      if (proveedores.length === 0) {
-        const option = document.createElement("option");
-        option.text = "No hay proveedores aún";
-        select.appendChild(option);
-        return;
-      }
+//eliminar proveedor
+eliminarProveedor.addEventListener("click", () => {
+  eliminarProv(selectProveedores.value);
+});
 
-      proveedores.forEach(nombre => {
-        const option = document.createElement("option");
-        option.value = nombre;
-        option.text = nombre;
-        select.appendChild(option);
-      });
-    })
-    .catch(err => console.error(err));
+//FORMULARIO
+
+//registro de datos creados por formulario
+document.getElementById("pedidoForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const pedido = {
+    proveedor: document.getElementById("proveedorSelect").value,
+    producto: document.getElementById("producto").value,
+    cantidad: document.getElementById("cantidad").value
+  };
+
+  const res = await fetch("http://localhost:3000/api/pedidos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(pedido)
+  });
+
+  const data = await res.json();
+  document.getElementById("mensaje").textContent = data.message;
+
+  e.target.reset();
+
+  cargarPedidos(pedido.proveedor);//refrescar tabla despues de guardar
+
+});
+
+//FUNCIONES
+
+//devuelve proveedores existentes
+async function cargarProveedores() {
+  try {
+    const res = await fetch("/api/proveedores");
+    const proveedores = await res.json();
+
+    selectProveedores.innerHTML = "";
+
+    proveedores.forEach(p => {
+      const option = document.createElement("option");
+      option.value = p;
+      option.textContent = p;
+      selectProveedores.appendChild(option);
+    });
+
+    //cargar pedidos del primer proveedor apenas se llena el select
+    if (proveedores.length > 0) {
+      cargarPedidos(proveedores[0]);
+    }
+  } catch (err) {
+    console.error("Error cargando proveedores:", err);
+  }
 }
 
-
+//crear proveedor
 function crearProveedor() {
   const nombre = document.getElementById('nombreProveedor').value;
   if (!nombre) {
-    alert("Ingrese un nombre de proveedor");
+    alert("Ingrese el nombre del proveedor");
     return;
   }
 
@@ -43,52 +89,59 @@ function crearProveedor() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ nombre })
   })
-  .then(res => res.json())
-  .then(data => {
-    alert(data.message || data.error);
-    document.getElementById('nombreProveedor').value = "";
-  })
-  .catch(err => console.error(err));
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message || data.error);
+      document.getElementById('nombreProveedor').value = "";
+    })
+    .catch(err => console.error(err));
+  cargarProveedores();//refrescar para ver el nuevo proveedor incluido
 }
 
-document.getElementById("pedidoForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const pedido = {
-        proveedor: document.getElementById("proveedor").value,
-        producto: document.getElementById("producto").value,
-        cantidad: document.getElementById("cantidad").value
-      };
-
-      const res = await fetch("http://localhost:3000/api/pedidos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pedido)
-      });
-
-      const data = await res.json();
-      document.getElementById("mensaje").textContent = data.message;
-
-      e.target.reset();
-
-      cargarPedidos();//refrescar tabla despues de guardar
-    });
-
-    cargarPedidos();//cargar pedidos al iniciar o refresar
-
-    async function cargarPedidos() {
-    const res = await fetch("http://localhost:3000/api/pedidos");
+async function cargarPedidos(proveedor) {
+  try {
+    const res = await fetch(`http://localhost:3000/api/pedidos/${proveedor}`);
     const pedidos = await res.json();
 
     const tbody = document.querySelector("#tablaPedidos tbody");
     tbody.innerHTML = ""; // limpiar antes de volver a pintar
 
-    pedidos.forEach(p => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
+    pedidos.forEach((p, index) => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
         <td>${p.proveedor}</td>
         <td>${p.producto}</td>
         <td>${p.cantidad}</td>
+        <td><button class="btn-eliminar">eliminar</button></td>
         `;
-        tbody.appendChild(fila);
+      const btn = fila.querySelector(".btn-eliminar");
+      btn.addEventListener("click", () => {
+        eliminarRegistro(proveedor, index);
+      });
+
+      tbody.appendChild(fila);
     });
-    }
+  } catch (err) {
+    console.error("error cargando pedidos", err);
+  }
+
+
+}
+
+async function eliminarRegistro(proveedor, index) {
+
+  if (!confirm("¿seguro que desea eliminar este registro?")) return;
+
+  await fetch(`api/pedidos/${proveedor}/${index}`, { method: "DELETE" });
+
+  cargarPedidos(proveedor);
+
+}
+
+async function eliminarProv(proveedor) {
+  if (!confirm("¿esta seguro que desea eliminar el proveedor?")) return;
+
+  await fetch(`api/proveedores/${proveedor}`, { method: "DELETE" });
+
+  cargarProveedores();
+}
