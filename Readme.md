@@ -17,6 +17,11 @@ El sistema permite gestionar los productos que deben solicitarse a cada proveedo
 El sistema permite agendar los clientes que han solicitado productos y llevar el seguimiento del proceso de venta de los productos. Permitiendo agendar clientes con pedidos pendientes y entregados.
 
 
+## Arquitectura utilizada ##
+
+![arquitectura-front-back](arquitectura.png)
+
+
 ## DESARROLLO DE APLICACION EN ENTORNO DE DESARROLLO Y EJECUCIÓN ##
 
 Inicialización en entorno e instalacion de dependencias.
@@ -28,7 +33,7 @@ Inicialización en entorno e instalacion de dependencias.
 - **cors**: permite que el navegador haga peticiones al backend sin bloquearlas.
 - **xlsx**: librería para leer y escribir archivos Excel .xlsx.
 
-![estructura_proyecto-pedidos](image.png)
+![estructura_proyecto-pedidos](raiz.png)
 
 
 

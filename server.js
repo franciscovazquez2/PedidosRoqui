@@ -111,7 +111,7 @@ app.post("/api/pedidos", (req, res) => {
   workbook.Sheets[proveedor] = newSheet;
 
   xlsx.writeFile(workbook, excelFilePath);
-  res.json({ message: "Pedido agregado correctamente" });
+  res.json({ message: "producto agregado correctamente" });
 });
 
 //DELETE

@@ -98,6 +98,7 @@ function crearProveedor() {
   cargarProveedores();//refrescar para ver el nuevo proveedor incluido
 }
 
+//mostrar pedidos segun provedor seleccionado
 async function cargarPedidos(proveedor) {
   try {
     const res = await fetch(`http://localhost:3000/api/pedidos/${proveedor}`);
@@ -112,9 +113,9 @@ async function cargarPedidos(proveedor) {
         <td>${p.proveedor}</td>
         <td>${p.producto}</td>
         <td>${p.cantidad}</td>
-        <td><button class="btn-eliminar">eliminar</button></td>
+        <td><button class="btn btn-danger">eliminar</button></td>
         `;
-      const btn = fila.querySelector(".btn-eliminar");
+      const btn = fila.querySelector(".btn");
       btn.addEventListener("click", () => {
         eliminarRegistro(proveedor, index);
       });
@@ -128,20 +129,22 @@ async function cargarPedidos(proveedor) {
 
 }
 
+//elimina registro (celda de hoja)
 async function eliminarRegistro(proveedor, index) {
 
   if (!confirm("¿seguro que desea eliminar este registro?")) return;
 
   await fetch(`api/pedidos/${proveedor}/${index}`, { method: "DELETE" });
 
-  cargarPedidos(proveedor);
+  cargarPedidos(proveedor);//actualizar el pedido
 
 }
 
+//elimina proveedor (hoja completa)
 async function eliminarProv(proveedor) {
   if (!confirm("¿esta seguro que desea eliminar el proveedor?")) return;
 
   await fetch(`api/proveedores/${proveedor}`, { method: "DELETE" });
 
-  cargarProveedores();
+  cargarProveedores();//actualizar los proveedores
 }
