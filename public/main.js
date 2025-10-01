@@ -2,8 +2,8 @@
 
 
 const selectProveedores = document.getElementById("proveedorSelect");
+const eliminarProveedorSelect = document.getElementById("eliminarProveedorSelect");
 const eliminarProveedor = document.getElementById("eliminarProveedor");
-
 //EVENTOS
 
 //hasta que no cargue no se muestran los proveedores existentes
@@ -19,9 +19,16 @@ selectProveedores.addEventListener("change", () => {
   }
 });
 
+eliminarProveedorSelect.addEventListener("change", () => {
+  const proveedor = eliminarProveedorSelect.value;
+  if (proveedor) {
+    cargarPedidos(proveedor);
+  }
+});
+
 //eliminar proveedor
 eliminarProveedor.addEventListener("click", () => {
-  eliminarProv(selectProveedores.value);
+  eliminarProv(eliminarProveedorSelect.value);
 });
 
 //FORMULARIO
@@ -35,7 +42,7 @@ document.getElementById("pedidoForm").addEventListener("submit", async e => {
     cantidad: document.getElementById("cantidad").value
   };
 
-  const res = await fetch("http://localhost:3000/api/pedidos", {
+  const res = await fetch("/api/pedidos", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(pedido)
@@ -59,12 +66,18 @@ async function cargarProveedores() {
     const proveedores = await res.json();
 
     selectProveedores.innerHTML = "";
+    eliminarProveedorSelect.innerHTML="";
 
     proveedores.forEach(p => {
       const option = document.createElement("option");
       option.value = p;
       option.textContent = p;
       selectProveedores.appendChild(option);
+
+      const option2 = document.createElement("option");
+      option2.value=p;
+      option2.textContent=p;
+      eliminarProveedorSelect.appendChild(option2);
     });
 
     //cargar pedidos del primer proveedor apenas se llena el select
@@ -101,7 +114,7 @@ function crearProveedor() {
 //mostrar pedidos segun provedor seleccionado
 async function cargarPedidos(proveedor) {
   try {
-    const res = await fetch(`http://localhost:3000/api/pedidos/${proveedor}`);
+    const res = await fetch(`/api/pedidos/${proveedor}`);
     const pedidos = await res.json();
 
     const tbody = document.querySelector("#tablaPedidos tbody");

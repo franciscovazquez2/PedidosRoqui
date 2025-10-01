@@ -6,86 +6,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pedidos App</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
 
   <div class="container py-4">
+
     <h1 class="mb-4 text-center">Gestión de pedidos</h1>
 
-    <!--seleccionar y eliminar proveedor-->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title">Seleccionar Proveedor</h5>
-        <div class="d-flex gap-2">
-          <select id="proveedorSelect" class="form-select"></select>
-          <button id="eliminarProveedor" class="btn btn-danger">
-            <i class="bi bi-trash"></i>Eliminar Proveedor
-          </button>
+    <!--nav de pestañas-->
+    <ul class="nav nav-tabs" id="appTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button"
+          role="tab">
+          Pedidos
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="proveedores-tab" data-bs-toggle="tab" data-bs-target="#proveedores" type="button"
+          role="tab">
+          Proveedores
+        </button>
+      </li>
+    </ul>
+
+    <!-- CONTENIDO DE LAS PESTAÑAS -->
+    <div class="tab-content mt-3" id="appTabsContent">
+
+      <!-- TAB PEDIDOS -->
+      <div class="tab-pane fade show active" id="pedidos" role="tabpanel">
+        <!--seleccionar proveedor-->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Seleccionar Proveedor</h5>
+            <div class="d-flex gap-2 col-md-6">
+              <select id="proveedorSelect" class="form-select"></select>
+            </div>
+          </div>
+        </div>
+
+        <!--crear pedido-->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <h5>Pedido</h5>
+            <form id="pedidoForm" class="col g-3">
+              <div class="col-md-6">
+                <label for="producto" class="form-label">Producto</label>
+                <input type="text" id="producto" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input type="number" id="cantidad" class="form-control" required>
+              </div>
+              <div class="col-12 text-start mt-2">
+                <button type="submit" class="btn btn-success">
+                  Agregar
+                </button>
+              </div>
+            </form>
+            <p id="mensaje" class="mt-2 text-success"></p>
+          </div>
+        </div>
+
+
+        <!--tabla de pedidos-->
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Productos agregados</h5>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover" id="tablaPedidos">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Proveedor</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!--crear proveedor-->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <h5>Crear Proveedor</h5>
-        <div class="input-group">
-          <input type="text" id="nombreProveedor" class="form-control" placeholder="Nombre del proveedor">
-          <button onclick="crearProveedor()" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>crear
-          </button>
+      <!-- TAB PROVEEDORES -->
+      <div class="tab-pane fade" id="proveedores" role="tabpanel">
+        <!-- Crear Proveedor -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Proveedor</h5>
+            <div class="input-group">
+              <input type="text" id="nombreProveedor" class="form-control" placeholder="Nombre del proveedor">
+              <button onclick="crearProveedor()" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Crear
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <!--crear pedido-->
-    <div class="card mb-4 shadow-sm">
-      <div class="card-body">
-        <h5>Pedido</h5>
-        <form id="pedidoForm" class="row g-3">
-          <div class="col-md-6">
-            <label for="producto" class="form-label">Producto</label>
-            <input type="text" id="producto" class="form-control" required>
+        <!-- Eliminar Proveedor -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Eliminar Proveedor</h5>
+            <div class="d-flex gap-2">
+              <select id="eliminarProveedorSelect" class="form-select"></select>
+              <button id="eliminarProveedor" class="btn btn-danger">
+                <i class="bi bi-trash"></i>Eliminar
+              </button>
+            </div>
           </div>
-          <div class="col-md-6">
-            <label for="cantidad" class="form-label">Cantidad</label>
-            <input type="number" id="cantidad" class="form-control" required>
-          </div>
-          <div class="col-12 text-end">
-            <button type="submit" class="btn btn-success">
-              Agregar
-            </button>
-          </div>
-        </form>
-        <p id="mensaje" class="mt-2 text-success"></p>
-      </div>
-    </div>
-
-    <!--tabla de pedidos-->
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title">Productos agregados</h5>
-        <div class="table-responsive">
-          <table class="table table-striped table-hover" id="tablaPedidos">
-            <thead class="table-dark">
-              <tr>
-                <th>Proveedor</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-
-            </tbody>
-          </table>
         </div>
+
       </div>
     </div>
-
-    <script src="main.js"></script>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="main.js"></script>
 </body>
 
 </html>
