@@ -39,7 +39,7 @@ document.getElementById("pedidoForm").addEventListener("submit", async e => {
   const pedido = {
     proveedor: document.getElementById("proveedorSelect").value,
     producto: document.getElementById("producto").value,
-    cantidad: document.getElementById("cantidad").value
+    codigo: document.getElementById("codigo").value
   };
 
   const res = await fetch("/api/pedidos", {
@@ -123,9 +123,8 @@ async function cargarPedidos(proveedor) {
     pedidos.forEach((p, index) => {
       const fila = document.createElement("tr");
       fila.innerHTML = `
-        <td>${p.proveedor}</td>
         <td>${p.producto}</td>
-        <td>${p.cantidad}</td>
+        <td>${p.codigo}</td>
         <td><button class="btn btn-danger">eliminar</button></td>
         `;
       const btn = fila.querySelector(".btn");

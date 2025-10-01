@@ -44,7 +44,7 @@ app.get("/api/pedidos/:proveedor", (req, res) => {
       pedidos.push({
         proveedor,
         producto: row[0],
-        cantidad: row[1],
+        codigo: row[1],
       });
     });
     res.json(pedidos);
@@ -74,7 +74,7 @@ app.post('/api/proveedores', (req, res) => {
     if (workbook.SheetNames.includes(nombre)) {return res.status(400).json({ error: 'Ese proveedor ya existe' });}
 
     // Crear hoja vacía con headers
-    const data = [["Producto", "Cantidad"]];
+    const data = [["Producto", "Codigo"]];
     const newSheet = xlsx.utils.aoa_to_sheet(data);
 
     // Añadir hoja al workbook
@@ -93,8 +93,8 @@ app.post('/api/proveedores', (req, res) => {
 
 //crear/agregar a pedido
 app.post("/api/pedidos", (req, res) => {
-  const { proveedor, producto, cantidad } = req.body;
-  if (!proveedor || !producto || !cantidad)
+  const { proveedor, producto, codigo } = req.body;
+  if (!proveedor || !producto || !codigo)
     return res.status(400).json({ error: "Datos incompletos" });
 
   if (!fs.existsSync(excelFilePath))
@@ -106,7 +106,7 @@ app.post("/api/pedidos", (req, res) => {
 
   const sheet = workbook.Sheets[proveedor];
   const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
-  rows.push([producto, cantidad]);
+  rows.push([producto, codigo]);
   const newSheet = xlsx.utils.aoa_to_sheet(rows);
   workbook.Sheets[proveedor] = newSheet;
 
