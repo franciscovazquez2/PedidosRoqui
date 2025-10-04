@@ -1,26 +1,19 @@
 "use strict";
 
-
 const selectProveedores = document.getElementById("proveedorSelect");
 const eliminarProveedorSelect = document.getElementById("eliminarProveedorSelect");
 const eliminarProveedor = document.getElementById("eliminarProveedor");
 //EVENTOS
 
-//hasta que no cargue no se muestran los proveedores existentes
+//cargar proveedores y avisos en el inicio
 document.addEventListener("DOMContentLoaded", () => {
   cargarProveedores();
+  cargarAvisos();
 });
 
-//cada vez que cambia el select se muestra el pedido del proveedor
+//mostrar pedido del proveedor al cambiar el select proveedor
 selectProveedores.addEventListener("change", () => {
   const proveedor = selectProveedores.value;
-  if (proveedor) {
-    cargarPedidos(proveedor);
-  }
-});
-
-eliminarProveedorSelect.addEventListener("change", () => {
-  const proveedor = eliminarProveedorSelect.value;
   if (proveedor) {
     cargarPedidos(proveedor);
   }
@@ -31,9 +24,9 @@ eliminarProveedor.addEventListener("click", () => {
   eliminarProv(eliminarProveedorSelect.value);
 });
 
-//FORMULARIO
+//FORMULARIOS
 
-//registro de datos creados por formulario
+//registro de datos creados por formulario productos
 document.getElementById("pedidoForm").addEventListener("submit", async e => {
   e.preventDefault();
   const pedido = {
@@ -51,9 +44,42 @@ document.getElementById("pedidoForm").addEventListener("submit", async e => {
   const data = await res.json();
   document.getElementById("mensaje").textContent = data.message;
 
+  setTimeout(function () {
+    document.getElementById("mensaje").textContent = "";
+  }, 2000); // Espera 2 segundos y borra el comentario
+  
   e.target.reset();
 
   cargarPedidos(pedido.proveedor);//refrescar tabla despues de guardar
+
+});
+
+//registro de datos creados por formulario avisos
+document.getElementById("avisosForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const aviso = {
+    producto: document.getElementById("productoAviso").value,
+    codigo: document.getElementById("codigoAviso").value,
+    nombreCliente: document.getElementById("nombreCliente").value,
+    telefono: document.getElementById("telefono").value
+  };
+
+  const res = await fetch("/api/avisos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(aviso)
+  });
+
+  const data = await res.json();
+  document.getElementById("mensajeAviso").textContent = data.message;
+
+  setTimeout(function () {
+    document.getElementById("mensajeAviso").textContent = "";
+  }, 2000); // Espera 2 segundos y borra el comentario
+
+  e.target.reset();
+
+  cargarAvisos();//refrescar tabla despues de guardar
 
 });
 
@@ -66,7 +92,7 @@ async function cargarProveedores() {
     const proveedores = await res.json();
 
     selectProveedores.innerHTML = "";
-    eliminarProveedorSelect.innerHTML="";
+    eliminarProveedorSelect.innerHTML = "";
 
     proveedores.forEach(p => {
       const option = document.createElement("option");
@@ -75,8 +101,8 @@ async function cargarProveedores() {
       selectProveedores.appendChild(option);
 
       const option2 = document.createElement("option");
-      option2.value=p;
-      option2.textContent=p;
+      option2.value = p;
+      option2.textContent = p;
       eliminarProveedorSelect.appendChild(option2);
     });
 
@@ -138,7 +164,48 @@ async function cargarPedidos(proveedor) {
     console.error("error cargando pedidos", err);
   }
 
+}
 
+//devuelve listado de avisos
+async function cargarAvisos() {
+  try {
+    const res = await fetch("/api/avisos");
+    const avisos = await res.json();
+
+    const tbody = document.querySelector("#tablaAvisos tbody");
+    tbody.innerHTML = "";//limpiar antes de volver a mostrar
+
+    avisos.forEach((a, index) => {
+      const fila = document.createElement("tr");
+      fila.innerHTML = `
+      <td>${a.producto}</td>
+      <td>${a.codigo}</td>
+      <td>${a.nombreCliente}</td>
+      <td>${a.telefono}</td>
+      <td class="${a.estado === 'Avisado' ? 'text-success fw-bold' : ''}">
+      ${a.estado}
+      </td>
+      <td>
+      <button class="btn btn-success btn-sm me-2">Avisado</button>
+      <button class="btn btn-danger btn-sm">Eliminar</button>
+      </td>
+      `;
+
+      // botón avisado
+      fila.querySelector(".btn-success").addEventListener("click", () => {
+        marcarAvisado(index);
+      });
+
+      // botón eliminar
+      fila.querySelector(".btn-danger").addEventListener("click", () => {
+        eliminarRegistroAviso(index);
+      });
+
+      tbody.appendChild(fila);
+    })
+  } catch (err) {
+    console.log("error al intentar cargar aviso", err);
+  }
 }
 
 //elimina registro (celda de hoja)
@@ -159,4 +226,23 @@ async function eliminarProv(proveedor) {
   await fetch(`api/proveedores/${proveedor}`, { method: "DELETE" });
 
   cargarProveedores();//actualizar los proveedores
+}
+
+//put
+async function marcarAvisado(index) {
+  await fetch(`/api/avisos/${index}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ estado: "Avisado" })
+  });
+
+  cargarAvisos();
+}
+
+//eliminacion de aviso
+async function eliminarRegistroAviso(index) {
+  if (!confirm("¿Seguro que deseas eliminar este aviso?")) return;
+
+  await fetch(`/api/avisos/${index}`, { method: "DELETE" });
+  cargarAvisos();
 }

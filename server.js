@@ -5,6 +5,7 @@ const fs = require("fs");
 const cors = require("cors");
 const path = require("path");
 const xlsx = require("xlsx");
+const { ClientRequest } = require("http");
 const app = express();
 
 app.use(cors());
@@ -12,7 +13,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 const excelFilePath = path.join(__dirname, "pedidos.xlsx");
-
+const exelFilePathAvisos = path.join(__dirname, "avisos.xlsx");
 //METODOS CRUD
 
 //GET
@@ -54,13 +55,38 @@ app.get("/api/pedidos/:proveedor", (req, res) => {
   }
 });
 
+//obtener avisos cargados
+app.get("/api/avisos",(req,res)=>{
+  try {
+    if (!fs.existsSync(exelFilePathAvisos)) return res.json([]);//devolver vacio si no existen hojas
+    const workbook = xlsx.readFile(exelFilePathAvisos);
+    const avisos = [];
+    const sheet = workbook.Sheets["avisos"];
+    const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+    rows.slice(1).forEach((row,i) => {
+      avisos.push({
+        index: i,
+        producto: row[0],
+        codigo: row[1],
+        nombreCliente: row[2],
+        telefono: row[3],
+        estado:row[4] || "pendiente"
+      });
+    });
+    res.json(avisos);
+  } catch (err) {
+    console.error("error leyendo exel:", err);
+    res.status(500).json({ error: "no se pudo leer el archivo" });
+  }
+});
+
 //POST
 
 //crear proveedor
 app.post('/api/proveedores', (req, res) => {
   const { nombre } = req.body;
 
-  if (!nombre) {return res.status(400).json({ error: 'El nombre del proveedor es obligatorio' });}
+  if (!nombre) { return res.status(400).json({ error: 'El nombre del proveedor es obligatorio' }); }
 
   try {
     // Leer archivo existente o crear uno nuevo
@@ -71,7 +97,7 @@ app.post('/api/proveedores', (req, res) => {
       workbook = xlsx.utils.book_new();
     }
     // Revisar si ya existe la hoja
-    if (workbook.SheetNames.includes(nombre)) {return res.status(400).json({ error: 'Ese proveedor ya existe' });}
+    if (workbook.SheetNames.includes(nombre)) { return res.status(400).json({ error: 'Ese proveedor ya existe' }); }
 
     // Crear hoja vacía con headers
     const data = [["Producto", "Codigo"]];
@@ -113,6 +139,42 @@ app.post("/api/pedidos", (req, res) => {
   xlsx.writeFile(workbook, excelFilePath);
   res.json({ message: "producto agregado correctamente" });
 });
+
+//crear aviso
+app.post("/api/avisos", (req, res) => {
+  const { producto, codigo, nombreCliente, telefono } = req.body;
+
+  if (!producto || !codigo || !nombreCliente || !telefono)
+    return res.status(400).json({ error: "Datos incompletos" });
+
+  try {
+    let workbook;
+    if (fs.existsSync(exelFilePathAvisos)) {
+      workbook = xlsx.readFile(exelFilePathAvisos);
+    } else {
+      workbook = xlsx.utils.book_new();
+      const ws = xlsx.utils.aoa_to_sheet([["Producto", "Codigo", "Cliente", "Telefono", "Estado"]]);
+      xlsx.utils.book_append_sheet(workbook, ws, "avisos");
+    }
+
+    const sheet = workbook.Sheets["avisos"];
+    const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+
+    rows.push([producto, codigo, nombreCliente, telefono, "pendiente"]);
+
+    const newSheet = xlsx.utils.aoa_to_sheet(rows);
+    workbook.Sheets["avisos"] = newSheet;
+
+    xlsx.writeFile(workbook, exelFilePathAvisos);
+
+    res.json({ message: "Aviso agregado correctamente" });
+  }catch(err){
+    console.log("Error guardando avisos", err);
+    return res.status(500).json({error:"No se pudo guardar el aviso"});
+  }
+
+});
+
 
 //DELETE
 
@@ -169,7 +231,64 @@ app.delete("/api/proveedores/:proveedor", (req, res) => {
   }
 });
 
+// Eliminar aviso por índice
+app.delete("/api/avisos/:index", (req, res) => {
+  try {
+    const { index } = req.params;
+    if (!fs.existsSync(exelFilePathAvisos))
+      return res.status(404).json({ error: "Archivo no encontrado" });
 
-app.listen(3000,"0.0.0.0", () => {
+    const workbook = xlsx.readFile(exelFilePathAvisos);
+    const sheet = workbook.Sheets["avisos"];
+    if (!sheet) return res.status(404).json({ error: "Hoja 'avisos' no encontrada" });
+
+    const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+    if (rows.length <= 1) return res.status(400).json({ error: "No hay registros" });
+
+    // Mantener cabecera y eliminar fila
+    rows.splice(parseInt(index) + 1, 1);
+
+    const newSheet = xlsx.utils.aoa_to_sheet(rows);
+    workbook.Sheets["avisos"] = newSheet;
+
+    xlsx.writeFile(workbook, exelFilePathAvisos);
+    res.json({ message: "Aviso eliminado" });
+  } catch (err) {
+    console.error("Error eliminando aviso:", err);
+    res.status(500).json({ error: "No se pudo eliminar el aviso" });
+  }
+});
+
+// Marcar aviso como "Avisado"
+app.put("/api/avisos/:index", (req, res) => {
+  try {
+    const { index } = req.params;
+    if (!fs.existsSync(exelFilePathAvisos))
+      return res.status(404).json({ error: "Archivo no encontrado" });
+
+    const workbook = xlsx.readFile(exelFilePathAvisos);
+    const sheet = workbook.Sheets["avisos"];
+    if (!sheet) return res.status(404).json({ error: "Hoja 'avisos' no encontrada" });
+
+    const rows = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+    if (!rows[parseInt(index) + 1]) return res.status(404).json({ error: "Aviso no encontrado" });
+
+    // Cambiar columna estado (posición 4)
+    rows[parseInt(index) + 1][4] = "Avisado";
+
+    const newSheet = xlsx.utils.aoa_to_sheet(rows);
+    workbook.Sheets["avisos"] = newSheet;
+
+    xlsx.writeFile(workbook, exelFilePathAvisos);
+    res.json({ message: "Aviso actualizado" });
+  } catch (err) {
+    console.error("Error actualizando aviso:", err);
+    res.status(500).json({ error: "No se pudo actualizar el aviso" });
+  }
+});
+
+
+
+app.listen(3000, "0.0.0.0", () => {
   console.log("Servidor corriendo en http://localhost:3000");
 });
