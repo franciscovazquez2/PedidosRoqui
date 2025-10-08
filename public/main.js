@@ -42,14 +42,8 @@ document.getElementById("pedidoForm").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-  document.getElementById("mensaje").textContent = data.message;
-
-  setTimeout(function () {
-    document.getElementById("mensaje").textContent = "";
-  }, 2000); // Espera 2 segundos y borra el comentario
-  
+  mostrarAlerta(data.message, "success");
   e.target.reset();
-
   cargarPedidos(pedido.proveedor);//refrescar tabla despues de guardar
 
 });
@@ -71,14 +65,8 @@ document.getElementById("avisosForm").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-  document.getElementById("mensajeAviso").textContent = data.message;
-
-  setTimeout(function () {
-    document.getElementById("mensajeAviso").textContent = "";
-  }, 2000); // Espera 2 segundos y borra el comentario
-
+  mostrarAlerta(data.message, "success");
   e.target.reset();
-
   cargarAvisos();//refrescar tabla despues de guardar
 
 });
@@ -119,7 +107,7 @@ async function cargarProveedores() {
 function crearProveedor() {
   const nombre = document.getElementById('nombreProveedor').value;
   if (!nombre) {
-    alert("Ingrese el nombre del proveedor");
+    mostrarAlerta("Ingrese el nombre del proveedor", "info");
     return;
   }
 
@@ -130,7 +118,11 @@ function crearProveedor() {
   })
     .then(res => res.json())
     .then(data => {
-      alert(data.message || data.error);
+      if (data.message) {
+        mostrarAlerta(data.message, "success")
+      } else {
+        mostrarAlerta(data.error, "danger");
+      }
       document.getElementById('nombreProveedor').value = "";
     })
     .catch(err => console.error(err));
@@ -151,7 +143,9 @@ async function cargarPedidos(proveedor) {
       fila.innerHTML = `
         <td>${p.producto}</td>
         <td>${p.codigo}</td>
-        <td><button class="btn btn-danger">eliminar</button></td>
+        <td class="text-center"><button class="btn btn-danger">
+          <i class="bi bi-trash"></i> eliminar
+        </button></td>
         `;
       const btn = fila.querySelector(".btn");
       btn.addEventListener("click", () => {
@@ -185,9 +179,11 @@ async function cargarAvisos() {
       <td class="${a.estado === 'Avisado' ? 'text-success fw-bold' : ''}">
       ${a.estado}
       </td>
-      <td>
+      <td class="text-center">
       <button class="btn btn-success btn-sm me-2">Avisado</button>
-      <button class="btn btn-danger btn-sm">Eliminar</button>
+      <button class="btn btn-danger btn-sm">
+        <i class="bi bi-trash"></i>
+      </button>
       </td>
       `;
 
@@ -210,22 +206,20 @@ async function cargarAvisos() {
 
 //elimina registro (celda de hoja)
 async function eliminarRegistro(proveedor, index) {
-
-  if (!confirm("¿seguro que desea eliminar este registro?")) return;
-
-  await fetch(`api/pedidos/${proveedor}/${index}`, { method: "DELETE" });
-
-  cargarPedidos(proveedor);//actualizar el pedido
-
+  mostrarConfirmacion("¿ Está seguro que desea eliminar este registro?", async () => {
+    await fetch(`api/pedidos/${proveedor}/${index}`, { method: "DELETE" });
+    mostrarAlerta("Registro eliminado correctamente", "success");
+    cargarPedidos(proveedor);//actualizar el pedido
+  });
 }
 
 //elimina proveedor (hoja completa)
 async function eliminarProv(proveedor) {
-  if (!confirm("¿esta seguro que desea eliminar el proveedor?")) return;
-
-  await fetch(`api/proveedores/${proveedor}`, { method: "DELETE" });
-
-  cargarProveedores();//actualizar los proveedores
+  mostrarConfirmacion("¿esta seguro que desea eliminar el proveedor?", async () => {
+    await fetch(`api/proveedores/${proveedor}`, { method: "DELETE" });
+    mostrarAlerta("Proveedor eliminado correctamente", "success");
+    cargarProveedores();//actualizar los proveedores
+  });
 }
 
 //put
@@ -241,8 +235,56 @@ async function marcarAvisado(index) {
 
 //eliminacion de aviso
 async function eliminarRegistroAviso(index) {
-  if (!confirm("¿Seguro que deseas eliminar este aviso?")) return;
+  mostrarConfirmacion("¿Está seguro que desea eliminar este aviso?", async () => {
+    await fetch(`/api/avisos/${index}`, { method: "DELETE" });
+    mostrarAlerta("Aviso eliminado exitosamente", "success");
+    cargarAvisos();
+  });
+}
 
-  await fetch(`/api/avisos/${index}`, { method: "DELETE" });
-  cargarAvisos();
+//LOGS
+
+//funcion que muestra el estado de una confirmacion o alerta.
+function mostrarAlerta(message, type = "success") {
+  const overlay = document.getElementById("alertContainer");
+  const alertBox = overlay.querySelector(".alert-box");
+
+  const color = type === "success" ? "alert-success" :
+    type === "danger" ? "alert-danger" :
+      "alert-info";
+
+  alertBox.innerHTML = `
+    <div class="alert ${color} mb-0">
+      ${message}
+    </div>
+  `;
+
+  overlay.classList.remove("d-none");
+
+  // Oculta automáticamente a los 3 segundos
+  setTimeout(() => {
+    overlay.classList.add("d-none");
+  }, 1500);
+}
+
+
+//funcion para confirmar operacion, recibe mensaje de confirmacion y posterior ejecucion "accionConfirmar"
+function mostrarConfirmacion(mensaje, accionConfirmar) {
+  const modal = new bootstrap.Modal(document.getElementById("confirmModal"));
+  const mensajeEl = document.getElementById("confirmModalMessage");
+  const botonConfirmar = document.getElementById("confirmModalBtn");
+
+  mensajeEl.textContent = mensaje;
+
+  // Limpiamos listeners anteriores (para que no se acumulen)
+  const nuevoBoton = botonConfirmar.cloneNode(true);
+  botonConfirmar.parentNode.replaceChild(nuevoBoton, botonConfirmar);
+
+  // Asignamos la acción personalizada
+  nuevoBoton.addEventListener("click", () => {
+    accionConfirmar();
+    modal.hide();
+  });
+
+  modal.show();
 }
