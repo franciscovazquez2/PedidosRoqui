@@ -1,6 +1,6 @@
 # PEDIDOS-AVISOS APP #
 
-Pedidos-Avisos APP, consiste en una aplicación web desarrollada en HTML5, JS, CSS. El proyecto fue creado mediante Node.js.
+Pedidos-Avisos APP, consiste en una aplicación web desarrollada en HTML5, JS, CSS y BOOSTRAP. El proyecto fue creado mediante Node.js.
 
 La aplicación cumple con dos funcionalidades:
 
@@ -35,5 +35,18 @@ Inicialización en entorno e instalacion de dependencias.
 
 ![estructura_proyecto-pedidos](raiz.png)
 
+
+## Ejecución y puesta en funcionamiento de la aplicación ##
+
+El archivo iniciarServidor.bat es el responsable de iniciar el servidor y lograr una conexión entre el back y el front.
+
+Se puede iniciar de todos modos desde el terminal dentro de la carpeta /proyecto-pedidos mediante el comando
+
+    node server.js
+
+
+### Avisos e información al usuario ###
+
+Mediante modales de Boostrap y alertas, se mantiene un estado controlado sobre la información llevada a cabo y los errores de usuario, entradas en inputs o errores de tipeo.
 
 
